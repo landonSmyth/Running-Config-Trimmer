@@ -1,0 +1,241 @@
+...
+
+
+Current configuration : 3897 bytes
+!
+! Last configuration change at 13:59:04 UTC Fri Mar 17 2023
+!
+version 16.12
+service timestamps debug datetime msec
+service timestamps log datetime msec
+! Call-home is enabled by Smart-Licensing.
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+!
+hostname Toronto
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition Mgmt-intf
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+!
+no aaa new-model
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+  no destination transport-method email
+!
+!
+!
+!
+!
+!
+!
+no ip domain lookup
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-59485405
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-59485405
+ revocation-check none
+ rsakeypair TP-self-signed-59485405
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+crypto pki certificate chain TP-self-signed-59485405
+ certificate self-signed 01
+crypto pki certificate chain SLA-TrustPoint
+ certificate ca 01
+!
+!
+no license feature hseck9
+license udi pid ISR4331/K9 sn FLM2420069T
+license boot level appxk9
+license boot level uck9 disable
+license boot level securityk9
+memory free low-watermark processor 67065
+!
+diagnostic bootup level minimal
+!
+spanning-tree extend system-id
+!
+!
+redundancy
+ mode none
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback1
+ ip address 1.1.1.1 255.255.255.255
+ ip nat inside
+!
+interface Tunnel1
+ bandwidth 1000000
+ ip address 10.1.14.1 255.255.255.0
+ no ip redirects
+ ip nhrp authentication BHL
+ ip nhrp network-id 14
+ ip nhrp redirect
+ delay 48
+ tunnel source GigabitEthernet0/0/1.100
+ tunnel mode gre multipoint
+ tunnel key 42
+!
+interface GigabitEthernet0/0/0
+ description Link to MPLS Cloud
+ ip address 10.202.10.1 255.255.255.248
+ negotiation auto
+ mpls ip
+ mpls label protocol ldp
+!
+interface GigabitEthernet0/0/1
+ description Trunk Link to D1
+ no ip address
+ negotiation auto
+!
+interface GigabitEthernet0/0/1.10
+ description Link to D1 Local LAN
+ encapsulation dot1Q 10
+ ip address 172.16.14.1 255.255.255.0
+ ip nat inside
+!
+interface GigabitEthernet0/0/1.100
+ description Link to D1 Internet
+ encapsulation dot1Q 100
+ ip address 199.212.32.14 255.255.255.0
+ ip nat outside
+!
+interface GigabitEthernet0/0/2
+ no ip address
+ shutdown
+ negotiation auto
+!
+interface Serial0/1/0
+!
+interface Serial0/1/1
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ no ip address
+ shutdown
+ negotiation auto
+!
+!
+router eigrp OntarioTech14
+ !
+ address-family ipv4 unicast autonomous-system 14
+  !
+  af-interface GigabitEthernet0/0/1.10
+   passive-interface
+  exit-af-interface
+  !
+  af-interface Tunnel1
+   summary-address 172.16.0.0 255.255.0.0
+  exit-af-interface
+  !
+  topology base
+  exit-af-topology
+  network 1.0.0.0
+  network 10.0.0.0
+  network 172.16.14.1 0.0.0.0
+  network 199.212.32.14 0.0.0.0
+  eigrp router-id 1.1.1.1
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip tftp source-interface GigabitEthernet0
+ip nat inside source list NAT-ACL interface GigabitEthernet0/0/1.100 overload
+ip route 0.0.0.0 0.0.0.0 199.212.32.254
+ip route 172.16.0.0 255.255.0.0 172.16.14.254
+!
+!
+ip access-list standard NAT-ACL
+ 20 permit 1.1.1.1
+ 10 permit 172.16.0.0 0.0.255.255
+!
+!
+!
+!
+mpls ldp router-id Loopback1
+!
+!
+!
+control-plane
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line aux 0
+ stopbits 1
+line vty 0 4
+ login
+!
+!
+!
+!
+!
+!
+end
+
